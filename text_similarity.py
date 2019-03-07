@@ -10,7 +10,6 @@ from nltk.stem import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.preprocessing import normalize
-import random
 
 # read data
 file = "" # specify file path & name
@@ -39,13 +38,17 @@ regex_dict = {'1[a-z][0-3][a-z0-9]+':'cal_code',
               '[0-9]+[a-z]*': 'num_code',
               'st[and]*bi':'standby'}
 
-## extracting & replacing people names
-names_dict = {'afifah|afiq|akmal|aiwan|ameer|amir|amer|ar[nlea]+nx[ei]+o|chua[n]*|eugen|eusoff| \
-              fadhil|fadilah|faizal|fareez|fari[dht]+|john|johnson|jasman|jason|jaya|justin| \
-              kamil|karu|kasei|kong|leo[ng]*|liza|muthu|m[oou]+rthi|martin|mianten|muru|munzir|naz|n[ie]+zam|nezem| \
-              pathiban|patrick|p[eung]+fei|peng|rashid|ri[duwzh]+an|redzuan|raymond|raja|rajesh|rahul| \
-              safurah|santana|sant[h]*an[a]*|sara|sarthish|saru|sat[heei]+sh|sati|senthil|shuhadah|stanley| \
-              vi[ckgn]+esh|wang|wangwei|yang|yani|yap|yazid|yong':'name'}
+def clean_sentence(sentence):
+    stop_words = set(stopwords.words("english"))
+    words = word_tokenize(sentence) ## sentence.lower().split()
+    words_cleaned = [w.lower() for w in words if w not in stop_words] #and re.match('^[A-Za-z]+', w)] #and w not in string.punctuation]
+    stemmer = PorterStemmer()
+    vocab_stemmed = [stemmer.stem(word) for word in words_cleaned]
+    lem = WordNetLemmatizer()
+    vocab_lem = [lem.lemmatize(word) for word in vocab_stemmed]
+    sent_cleaned = " ".join(vocab_lem) #stemmed)
+    sent_cleaned = clean_words(sent_cleaned, regex_dict)
+    return sent_cleaned
 
 clean_data = [clean_sentence(sent) for sent in data]
 
@@ -83,7 +86,7 @@ def extract_similar(sentence, vectorizer, vector_df):
     print('The top most similar logs are:', '\n\n', \
             '1: ', data.iloc[idx_top3[0]], '\n\n', \
             '2: ', data.iloc[idx_top3[1]], '\n\n', \
-            '3: ', data.iloc[idx_top3[2]])
+            '3: ', data.iloc[idx_top3[2]], '\n','~'*50)
 
 
 print('With binary method', '\n')
