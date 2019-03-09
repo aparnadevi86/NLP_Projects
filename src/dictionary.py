@@ -1,0 +1,12 @@
+NUMERIC_CODES = {'1[a-z][0-3][a-z0-9]+':'cal_code',
+              '[0-9]+\s?h[ours\s,:.-]*|[0-9]+\s?[ap]m':'xtime ',
+              '[0-9]+\s?d[egrc]*|[0-9]+\s?c\s':'xdegc ',
+              '[0-9]+\s?kpa':'xkpa',
+              '[0-9]+\s?mpa':'xmpa', 
+              '[0-9]+\s?mm':'xmm', 
+              '[0-9]+\s?bar':'xbar',
+              '[0-9]+\s?kv':'xkv', 
+              '[0-9]+\s?mw':'xmw',
+              '9[a-z][a-z0-9]+':'inlet_code',
+              '[0-9]+[a-z]*': 'num_code',
+              'st[and]*bi':'standby'}
