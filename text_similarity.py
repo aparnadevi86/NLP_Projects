@@ -82,11 +82,11 @@ def extract_similar(sentence, vectorizer, vector_df):
     sent_vector =  vectorizer.transform(clean_sent).toarray() # binary/count/tfidf
     norm_vector = normalize(sent_vector, norm='l1', axis=1)
     sent_similarity = norm_vector*vector_df.T  # dotproduct/cosine similarity
-    idx_top3 = (-sent_similarity).argsort()[0,1:4]
+    top3 = (-sent_similarity).argsort()[0,1:4]
     print('The top most similar logs are:', '\n\n', \
-            '1: ', data.iloc[idx_top3[0]], '\n\n', \
-            '2: ', data.iloc[idx_top3[1]], '\n\n', \
-            '3: ', data.iloc[idx_top3[2]], '\n','~'*50)
+            '1: ', data.iloc[top3[0]], '\n\n', \
+            '2: ', data.iloc[top3[1]], '\n\n', \
+            '3: ', data.iloc[top3[2]], '\n','~'*50)
 
 
 print('With binary method', '\n')
