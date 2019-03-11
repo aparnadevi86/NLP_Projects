@@ -1,3 +1,7 @@
+from collections import defaultdict
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+
 # define Inverted Index
 class Index:
     def __init__(self, tokenizer, stemmer = None, stopwords = None):
