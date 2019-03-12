@@ -1,8 +1,9 @@
 from collections import defaultdict
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
+from nltk.corpus import stopwords
 
-# define Inverted Index
+# create Inverted Index
 class Index:
     def __init__(self, tokenizer, stemmer = None, stopwords = None):
         
@@ -10,15 +11,15 @@ class Index:
         self.stemmer = stemmer          # use nltk stemmer
         self.index = defaultdict(list)  # initialize index dictionary
         self.documents = {}             # initialize documents dictionary
-        self.unique_id = 0            # start id
+        self.unique_id = 0              # initialize doc_id
         if not stopwords:               # set stopwords
             self.stopwords = set()
         else:
             self.stopwords = set(stopwords)
     
         
-    def add(self, document):   # create inverted indexing for document
-        for token in [t.lower() for t in nltk.word_tokenize(document)]:
+    def add(self, document):   # update index with words in document
+        for token in [t.lower() for t in self.tokenizer(document)]:
             if token in self.stopwords:  # remove stopwords
                 continue
                 
@@ -34,11 +35,16 @@ class Index:
         self.unique_id += 1    
 
 
-    def lookup(self, word):             # setup search method using created Index
-        word = word.lower()             # preprocess input text
+    def lookup(self, newdocument):   # lookup index for matching words from new document
+        tokens = [t.lower() for t in self.tokenizer(newdocument) if t not in self.stopwords]
+                
         if self.stemmer:
-            word = self.stemmer.stem(word)
-        # return id of matching documents
-        return [self.documents.get(id,None) for id in self.index.get(word)]
+            words = [self.stemmer.stem(t) for t  in tokens]
+        
+        match_documents = []         # create list of matching documents
+        for word in words:
+            match_documents.extend([self.documents.get(id,None) for id in self.index.get(word)])
+        
+        return match_documents
 
-index = Index(nltk.word_tokenize, PorterStemmer(), stopwords.words("english"))
+index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
