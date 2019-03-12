@@ -11,18 +11,19 @@ from nltk.stem import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.preprocessing import normalize
-import dictionary
+import dictionary # predefined regex replacements
 
-# read data
+# read data from the file specified
 if len(sys.argv) < 2:
     print("Please provide input file path")
     
 log = pd.read_excel(sys.argv[1])
 print(log.info())
 
+# Subset the data for analysis
 data = log.loc[(log['Type'] == 'Operations') & (log['Description'].notnull()), 'Description']
 
-# Preprocessing (clean, tokenize, stem)
+# Preprocessing 
 
 ## extracting repeated patterns & replacing with single term
 def clean_words(text, dict):
@@ -30,17 +31,12 @@ def clean_words(text, dict):
         text = re.sub(key, value, text)
     return text
 
-
+# process the data (clean, tokenize, stem)
 def clean_sentence(sentence):
-    stop_words = set(stopwords.words("english"))
-    words = word_tokenize(sentence) ## sentence.lower().split()
-    words_cleaned = [w.lower() for w in words if w not in stop_words] #and re.match('^[A-Za-z]+', w)] #and w not in string.punctuation]
-    stemmer = PorterStemmer()
-    vocab_stemmed = [stemmer.stem(word) for word in words_cleaned]
-    lem = WordNetLemmatizer()
-    vocab_lem = [lem.lemmatize(word) for word in vocab_stemmed]
-    sent_cleaned = " ".join(vocab_lem) #stemmed)
-    sent_cleaned = clean_words(sent_cleaned, dictionary.NUMERIC_CODES)
+    words = [w.lower() for w in word_tokenize(sentence) if w not in set(stopwords.words("english"))] 
+    words = [PorterStemmer().stem(w) for w in words]
+    words = [WordNetLemmatizer().lemmatize(w) for w in words]
+    sent_cleaned = clean_words(" ".join(words), dictionary.NUMERIC_CODES)
     return sent_cleaned
 
 clean_data = [clean_sentence(sent) for sent in data]
@@ -70,11 +66,11 @@ sent = np.random.choice(data)
 clean_sent = [clean_sentence(sent)]
 print('The input log is:', '\n\n', sent)
 
-# vectorize the input sentence
+# vectorize the input document & extract similar documents
 def extract_similar(sentence, vectorizer, vector_df):
     sent_vector =  vectorizer.transform(clean_sent).toarray() # binary/count/tfidf
-    norm_vector = normalize(sent_vector, norm='l1', axis=1)
-    sent_similarity = norm_vector*vector_df.T  # dotproduct/cosine similarity
+    sent_vector = normalize(sent_vector, norm='l1', axis=1)
+    sent_similarity = sent_vector*vector_df.T  # dotproduct/cosine similarity
     top3 = (-sent_similarity).argsort()[0,1:4]
     print('The top most similar logs are:', '\n\n', \
             '1: ', data.iloc[top3[0]], '\n\n', \
