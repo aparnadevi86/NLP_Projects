@@ -3,6 +3,7 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 import math
+import string
 
 class Index:
     def __init__(self, tokenizer, stemmer = None, stopwords = None):
@@ -19,7 +20,7 @@ class Index:
 
     
     def add(self, document):
-        for token in [t.lower() for t in self.tokenizer(document)]:
+        for token in [t.lower() for t in self.tokenizer(document) if t not in string.punctuation]:
             if token in self.stopwords:
                 continue
                 
@@ -40,7 +41,7 @@ class Index:
 
     
     def lookup(self, newdocument):
-        tokens = [t.lower() for t in self.tokenizer(newdocument) if t not in self.stopwords]
+        tokens = [t.lower() for t in self.tokenizer(newdocument) if t not in self.stopwords and t not in string.punctuation]
                 
         if self.stemmer:
             tokens = [self.stemmer.stem(t) for t  in tokens]
