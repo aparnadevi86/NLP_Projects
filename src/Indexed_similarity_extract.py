@@ -61,7 +61,7 @@ class Index:
             scores[k] = sum(v)
 
         print('The top 3 similar documents are: ', '\n')    
-        for item in sorted(scores.items(), key=lambda x: -x[1])[:3]:
+        for item in sorted(scores.items(), key=lambda x: -x[1])[1:4]:
             print('DOC_ID:',item[0], ', TF-IDF_Score:', item[1], '\n', self.documents[item[0]], '\n')
             
 index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
