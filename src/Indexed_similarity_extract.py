@@ -3,6 +3,7 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 import math
+import numpy as np
 import string
 
 class Index:
@@ -13,6 +14,9 @@ class Index:
         self.index = defaultdict(list)
         self.documents = {}    # store indexed documents
         self.unique_id = 0     # intialize doc_id
+        self.doclengths = {}   # store length of documents
+        self.tot_length = 0    # sum the document lengths to compute average for bm25
+        
         if not stopwords:
             self.stopwords = set()
         else:
@@ -35,33 +39,65 @@ class Index:
             if self.unique_id not in [idx[0] for idx in self.index[token]]:
                 self.index[token].append((self.unique_id, tf))
                                 
-        self.documents[self.unique_id] = document
+        self.documents[self.unique_id] = document  # id the document
         self.unique_id += 1    
 
+        self.doclengths[self.unique_id] = len(document)  # add the length to id of document
+        self.tot_length += len(document)                 # sum document_length for bm25
 
-    # search matches for new_document (New document is converted to tokens, lower-case and stemmed.
-    # For each token, the matching (doc_id,tf) is extracted. A new dictionary (doc_scoring) is
-    # created with doc_id and calculated tf_idfs. The tf_idfs for each document are summed and 
-    # the documents are ranked by their score, the top 3 ranked documents are printed.
 
-    def lookup(self, newdocument):
+    # Search matches for new_document (New document is converted to tokens, lower-case and stemmed.
+    # For each token:
+        # The matching (doc_id,tf) and doc_len are extracted. 
+        # 2 types pf scoring are calculated - Classical Lucene scoring & BM25 scoring
+        # A new dictionary (doc_scoring) is created with doc_id and calculated tf_idfs. 
+        # The tf_idfs for each document are summed and appended
+        # The documents are ranked by their score, the top 3 ranked documents are printed.
+
+    def lookup(self, newdocument, k = 1.2, b = 0.75):
         tokens = [t.lower() for t in self.tokenizer(newdocument) if t not in self.stopwords and t not in string.punctuation]
                 
         if self.stemmer:
             tokens = [self.stemmer.stem(t) for t  in tokens]
         
-        doc_scoring = defaultdict(list)
-        for token in tokens:
-            for k,v in self.index.get(token):
-                IDF = math.log(self.unique_id/len(self.index.get(token)))
-                doc_scoring[k].append((1+math.log(0.01+v))*IDF)
+        doc_count = self.unique_id+1        # total number of docs
+        lucene_scoring = defaultdict(list)
+        bm25_scoring = defaultdict(list)
         
-        scores = {}
-        for k,v in doc_scoring.items():
-            scores[k] = sum(v)
-
-        print('The top 3 similar documents are: ', '\n')    
-        for item in sorted(scores.items(), key=lambda x: -x[1])[1:4]:
-            print('DOC_ID:',item[0], ', TF-IDF_Score:', item[1], '\n', self.documents[item[0]], '\n')
+        for token in tokens:
+            if token in self.index:
+                doc_freq = len(self.index.get(token))       # number of matching documents for token
+                
+                for idx,tf in self.index.get(token):
+                   
+                    # for classic lucene scoring
+                    idf_lucene = 1.0 + math.log(doc_count/(doc_freq+1.0))
+                    lucene_scoring[idx].append(idf_lucene*np.sqrt(tf)/np.sqrt(self.doclengths[idx]))
+                                        
+                    # for bm25_scoring
+                    idf_bm25 = math.log(1.0 + (doc_count-doc_freq+0.5)/(doc_freq+0.5))
+                    L = np.divide(self.doclengths[idx], np.divide(self.tot_length, doc_count))
+                    tf_norm = np.divide((k+1)*tf, tf+k*(1.0-b+b*L))
+                    bm25_scoring[idx].append(tf_norm*idf_bm25)
+        
+        # sorting documents by classic lucene score
+        lucene_scores = {}
+        for key,val in lucene_scoring.items():
+            lucene_scores[key] = round(sum(val),3)
+      
+        print('The top 3 similar documents are: ', '\n')
+        for item in sorted(lucene_scores.items(), key=lambda x: -x[1])[1:4]:
+            print('DOC_ID:',item[0], ', TF-IDF_Score:', item[1],
+                  '\n', self.documents[item[0]], '\n')
+            
+        # sorting documents by BM25 score    
+        bm25_scores = {}
+        for key,val in bm25_scoring.items():
+            bm25_scores[key] = round(sum(val),3)
+      
+        print('The top 3 similar documents are: ', '\n')
+        for item in sorted(bm25_scores.items(), key=lambda x: -x[1])[1:4]:
+            print('DOC_ID:',item[0], ', BM25_Score:', item[1],
+                  '\n', self.documents[item[0]], '\n')
             
 index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
