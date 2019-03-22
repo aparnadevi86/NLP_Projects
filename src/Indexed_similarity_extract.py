@@ -28,14 +28,13 @@ class Index:
     # Inverted index format --> {word1:[(doc_id, tf), (doc_id,tf),..], word2:[(),(),...]}
 
     def add(self, document):
-        for token in [t.lower() for t in self.tokenizer(document) if t not in string.punctuation]:
-            if token in self.stopwords:
-                continue
+        tokens = [t.lower() for t in self.tokenizer(document) if t not in self.stopwords and t not in string.punctuation]
                 
-            if self.stemmer:
-                token = self.stemmer.stem(token)
-            
-            tf = document.lower().count(token)  
+        if self.stemmer:
+            tokens = [self.stemmer.stem(t) for t in tokens]
+
+        for token in tokens:    
+            tf = tokens.count(token)    # counting term frequency
             if self.unique_id not in [idx[0] for idx in self.index[token]]:
                 self.index[token].append((self.unique_id, tf))
                                 
@@ -46,7 +45,10 @@ class Index:
         self.tot_length += len(document)                 # sum document_length for bm25
 
 
-    # Search matches for new_document (New document is converted to tokens, lower-case and stemmed.
+    # Search matches for query 
+        # Query is converted to tokens, lower-case and stemmed. 
+        # Query_vec dictionary is created with tokens as keys and tf-idfs as values
+
     # For each token:
         # The matching (doc_id,tf) and doc_len are extracted. 
         # 2 types pf scoring are calculated - Classical Lucene scoring & BM25 scoring
@@ -54,15 +56,26 @@ class Index:
         # The tf_idfs for each document are summed and appended
         # The documents are ranked by their score, the top 3 ranked documents are printed.
 
-    def lookup(self, newdocument, k = 1.2, b = 0.75):
-        tokens = [t.lower() for t in self.tokenizer(newdocument) if t not in self.stopwords and t not in string.punctuation]
+    def lookup(self, query, k = 1.2, b = 0.75):
+        tokens = [t.lower() for t in self.tokenizer(query) if t not in self.stopwords and t not in string.punctuation]
                 
         if self.stemmer:
             tokens = [self.stemmer.stem(t) for t  in tokens]
         
         doc_count = self.unique_id+1        # total number of docs
-        lucene_scoring = defaultdict(list)
-        bm25_scoring = defaultdict(list)
+        
+    # creating query_vector with tf-idfs of each token in query    
+        query_vec = {}
+        
+        for token in tokens:
+            if token in self.index:
+                query_tf = 1 + math.log(tokens.count(token))
+                query_idf = math.log(doc_count/len(self.index.get(token)))
+                query_vec[token] = query_tf*query_idf 
+        
+    # ranking docs
+        lucene_scoring = defaultdict(list)  # initialize dictionary for lucene score per doc as key
+        bm25_scoring = defaultdict(list)    # initialize  dictionary for BM25 score per doc as key
         
         for token in tokens:
             if token in self.index:
@@ -72,13 +85,13 @@ class Index:
                    
                     # for classic lucene scoring
                     idf_lucene = 1.0 + math.log(doc_count/(doc_freq+1.0))
-                    lucene_scoring[idx].append(idf_lucene*np.sqrt(tf)/np.sqrt(self.doclengths[idx]))
+                    lucene_scoring[idx].append(query_vec[token]*idf_lucene*np.sqrt(tf)/np.sqrt(self.doclengths[idx]))
                                         
                     # for bm25_scoring
                     idf_bm25 = math.log(1.0 + (doc_count-doc_freq+0.5)/(doc_freq+0.5))
                     L = np.divide(self.doclengths[idx], np.divide(self.tot_length, doc_count))
                     tf_norm = np.divide((k+1)*tf, tf+k*(1.0-b+b*L))
-                    bm25_scoring[idx].append(tf_norm*idf_bm25)
+                    bm25_scoring[idx].append(query_vec[token]*tf_norm*idf_bm25)
         
         # sorting documents by classic lucene score
         lucene_scores = {}
