@@ -22,10 +22,11 @@ class Index:
         else:
             self.stopwords = set(stopwords)
 
-    # add documents to index by words (document is converted to lower case, punctuations & 
-    # stop-words removed, then the words are stemmed and indexed. The index will be a 
-    # dictionary containing words as keys and doc-id & fequency of word (term_frequncy) as value.
-    # Inverted index format --> {word1:[(doc_id, tf), (doc_id,tf),..], word2:[(),(),...]}
+    # Add documents to index by words 
+        # Document is converted to lower case, punctuations & stop-words removed
+        # the words are stemmed and indexed. 
+    # The index will be a dictionary containing words as keys & [doc-id, term_frequency] as value.
+        # Inverted index format --> {word1:[(doc_id, tf), (doc_id,tf),..], word2:[(),(),...]}
 
     def add(self, document):
         tokens = [t.lower() for t in self.tokenizer(document) if t not in self.stopwords and t not in string.punctuation]
