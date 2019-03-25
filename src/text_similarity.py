@@ -16,7 +16,8 @@ import dictionary # predefined regex replacements
 # read data from the file specified
 if len(sys.argv) < 2:
     print("Please provide input file path")
-    
+    sys.exit()
+  
 log = pd.read_excel(sys.argv[1])
 print(log.info())
 
