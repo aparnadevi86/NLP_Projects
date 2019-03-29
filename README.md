@@ -42,7 +42,8 @@ Additional fields for various categories (ordinal variables)
 
         *tf := sqrt(tf)*
         *idf := 1 + log(N/(df+1))*
-    - BM25 scoring* (Best Matching 25 - Okapi Weighting Scheme)
+    - BM25 scoring (Best Matching 25 - Okapi Weighting Scheme)
+    
         *tf := (k+1)*tf/(k(1- b+ b*L)+ tf)*
         *idf := log(1+ (N-df+0.5)/(df+0.5))*
 

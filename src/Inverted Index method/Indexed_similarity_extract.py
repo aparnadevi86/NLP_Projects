@@ -4,7 +4,11 @@ from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 import math
 import numpy as np
+import pandas as pd
 import string
+
+import time
+start = time.time()
 
 class Index:
     def __init__(self, tokenizer, stemmer = None, stopwords = None):
@@ -115,3 +119,16 @@ class Index:
                   '\n', self.documents[item[0]], '\n')
             
 index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
+
+df = pd.read_csv("D:\\Data\\RPO_Log.csv")
+df.columns = ['Description', 'Site', 'Area', 'WorkCenter', 'WorkUnit']
+df = df.fillna(value= 'None')
+data = df['Description']
+
+for d in data:
+    index.add(d)
+
+index.lookup("operation load steam continue")
+
+end = time.time()
+print(end - start)

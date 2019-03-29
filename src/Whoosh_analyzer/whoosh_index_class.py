@@ -1,22 +1,19 @@
 import os, os.path
 import pandas as pd
+import pprint
 from whoosh.fields import Schema, TEXT, KEYWORD, ID
 from whoosh.analysis import StemmingAnalyzer, RegexTokenizer, LowercaseFilter, StopFilter
 from whoosh.index import create_in
 from whoosh import index
 from whoosh.qparser import QueryParser
-import pprint
+
 
 class whooshIndexer:
-    def __init__(self):
+    def __init__(self, path, schema):
         self.analyzer = RegexTokenizer() | LowercaseFilter() | StopFilter()
-        self.schema =  Schema(Description=TEXT(stored=True, analyzer=self.analyzer),
-                            Site=TEXT(stored=True), 
-                            Area=KEYWORD(stored=True),
-                            WorkCenter=ID(stored=True))
-                               
-                               ### lowercases, and stem
-        if not os.path.exists("index"):   ##make an index folder if one does not exist
+        self.schema = schema
+                                                              
+        if not os.path.exists("index"):   ## make an index folder if one does not exist
             os.mkdir("index")
             index.create_in("index", self.schema)
         self.ix = index.open_dir("index") 
@@ -24,7 +21,7 @@ class whooshIndexer:
     def createIndex(self):
         """ creates the index """
         writer = self.ix.writer()
-        df = pd.read_csv('D:\\Data\\testdata.csv')
+        df = pd.read_csv(path)
         for _,row in df.iterrows():
             writer.add_document(Description = row[0],
                                 Site=row[1], 
