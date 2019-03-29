@@ -24,17 +24,17 @@ Additional fields for various categories (ordinal variables)
 ## Advanced approach
 
 - **Inverted Indexing**  
-    1. Create a unique document-id for each documents.
-    2. Create an index of words.
-    3. For every index word, add a list of document-id's with their corresponding term frequencies
-    4. While adding new documents, update the index with new words or with new doc-id for existing words
+    - Create a unique document-id for each documents.
+    - Create an index of words.
+    - For every index word, add a list of document-id's with their corresponding term frequencies
+    - While adding new documents, update the index with new words or with new doc-id for existing words
     
 - **Querying** 
-    1. Create word:tf-idf pairs for the query. 
+    - Create word:tf-idf pairs for the query. 
         tf = 1 + log(word_frequency)
         idf = log(total documents/number of matching documents)
-    2. Look for matching words in the index and the corresponding documents
-    3. Sum over all the matching words in the document, the product query_tfidf*document_tf_idf 
+    - Look for matching words in the index and the corresponding documents
+    - Sum over all the matching words in the document, the product query_tfidf*document_tf_idf 
 
 - **Scoring**
     Two types of document scoring are calculated.
@@ -44,7 +44,9 @@ Additional fields for various categories (ordinal variables)
     - *BM25 scoring* (Best Matching 25 - Okapi Weighting Scheme)
         tf := (k+1)*tf/(k(1- b+ b*L)+ tf)
         idf := log(1+ (N-df+0.5)/(df+0.5))
+
         *k= 1.2 --> tunes the impact of tf on scoring*
+        
         *b= 0.75 --> tunes the impact of document length(L) on scoring*
 
 - **Boosting**
