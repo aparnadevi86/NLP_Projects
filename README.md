@@ -38,16 +38,17 @@ Additional fields for various categories (ordinal variables)
 
 - **Scoring**
     Two types of document scoring are calculated.
-    - *Classical Lucene scoring*
-        tf := sqrt(tf)
-        idf := 1 + log(N/(df+1))
-    - *BM25 scoring* (Best Matching 25 - Okapi Weighting Scheme)
-        tf := (k+1)*tf/(k(1- b+ b*L)+ tf)
-        idf := log(1+ (N-df+0.5)/(df+0.5))
+    - Classical Lucene scoring
 
-        *k= 1.2 --> tunes the impact of tf on scoring*
-        
-        *b= 0.75 --> tunes the impact of document length(L) on scoring*
+        *tf := sqrt(tf)*
+        *idf := 1 + log(N/(df+1))*
+    - BM25 scoring* (Best Matching 25 - Okapi Weighting Scheme)
+        *tf := (k+1)*tf/(k(1- b+ b*L)+ tf)*
+        *idf := log(1+ (N-df+0.5)/(df+0.5))*
+
+        *k= 1.2* --> tunes the impact of tf on scoring
+
+        *b= 0.75* --> tunes the impact of document length(L) on scoring
 
 - **Boosting**
     Under progress
