@@ -9,10 +9,17 @@ Main field containing descriptive text to be analysed using NLP techniques.
 Additional fields for various categories (ordinal variables)
 
 ## Initial approach
-- **Cleaning**: The text needs to be tokenized, converted to lower case with punctuations removed and similar (usecase-specific) terms replaced using a dictionary.
-- **Vectorizing**: Each document (each row of the descriptive column) will be converted to a vector based on the vocabulary list of the whole document corpus. The corpus will thus be converted to a matrix with rows as vectors.
-- **Querying**: A new query will  be converted to a vector based on the words identified from the document corpus.
-- **Similarity calculation**: Cosine similarity is calculated by taking the dot product of the query vector with the vectorized matrix. The most similar documents will be the ones with highest values of the dot product. 
+- **Cleaning** 
+    - The text is tokenized, converted to lower case with punctuations removed
+    - Similar (usecase-specific) terms replaced using a dictionary
+- **Vectorizing** 
+    - Each document (each row of the descriptive column) will be converted to a vector based on the vocabulary list of the whole document corpus. 
+    - In the end, the corpus will thus be converted to a matrix with rows as vectors
+- **Querying**
+    - A new query will  be converted to a vector based on the words identified from the document corpus.
+- **Similarity calculation**
+    - Cosine similarity is calculated by taking the dot product of the query vector with the vectorized matrix
+    - The most similar documents will be the ones with highest values of the dot product
 - Other modifications:
     - 3 types of vectorisations were done
         - *Binary vectorizer* (1 for word present/0 for word not present)
@@ -45,6 +52,7 @@ Additional fields for various categories (ordinal variables)
     - BM25 scoring (Best Matching 25 - Okapi Weighting Scheme)
     
         *tf := (k+1)*tf/(k(1- b+ b*L)+ tf)*
+
         *idf := log(1+ (N-df+0.5)/(df+0.5))*
 
         *k= 1.2* --> tunes the impact of tf on scoring
