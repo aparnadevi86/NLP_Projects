@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -7,8 +8,8 @@ import numpy as np
 import pandas as pd
 import string
 
-import time
-start = time.time()
+# import time
+# start = time.time()
 
 class Index:
     def __init__(self, tokenizer, stemmer = None, stopwords = None):
@@ -56,7 +57,7 @@ class Index:
 
     # For each token:
         # The matching (doc_id,tf) and doc_len are extracted. 
-        # 2 types pf scoring are calculated - Classical Lucene scoring & BM25 scoring
+        # 2 types of scoring are calculated - Classical Lucene scoring & BM25 scoring
         # A new dictionary (doc_scoring) is created with doc_id and calculated tf_idfs. 
         # The tf_idfs for each document are summed and appended
         # The documents are ranked by their score, the top 3 ranked documents are printed.
@@ -74,6 +75,8 @@ class Index:
         
         for token in tokens:
             if token in self.index:
+                if token in BOOST_VALUES:
+                    boost = BOOST_VALUES[token]
                 query_tf = 1 + math.log(tokens.count(token))
                 query_idf = math.log(doc_count/len(self.index.get(token)))
                 query_vec[token] = query_tf*query_idf 
@@ -120,7 +123,13 @@ class Index:
             
 index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
 
-df = pd.read_csv("D:\\Data\\RPO_Log.csv")
+
+# read data from the file specified
+if len(sys.argv) < 2:
+    print("Please provide input file path")
+    sys.exit()
+  
+df = pd.read_excel(sys.argv[1])
 df.columns = ['Description', 'Site', 'Area', 'WorkCenter', 'WorkUnit']
 df = df.fillna(value= 'None')
 data = df['Description']
@@ -130,5 +139,5 @@ for d in data:
 
 index.lookup("operation load steam continue")
 
-end = time.time()
-print(end - start)
+# end = time.time()
+# print(end - start)
