@@ -60,4 +60,7 @@ Additional fields for various categories (ordinal variables)
         *b= 0.75* --> tunes the impact of document length(L) on scoring
 
 - **Boosting**
-    Under progress
+    - by boosting selected terms if present in the query
+    - create a dictionary of terms {'term':boost_value,...}
+    - once the query is tokenized, apply default boost =1.0 for all terms
+    - if the token is a key in the dictionary, change the boost as in dict.
