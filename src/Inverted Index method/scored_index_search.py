@@ -7,6 +7,8 @@ import math
 import numpy as np
 import pandas as pd
 import string
+import boostscores
+import pickle as pkl
 
 # import time
 # start = time.time()
@@ -34,6 +36,7 @@ class Index:
         # Inverted index format --> {word1:[(doc_id, tf), (doc_id,tf),..], word2:[(),(),...]}
 
     def add(self, document):
+        '''adds documents to the index while tokenizing and updating the corpus'''
         tokens = [t.lower() for t in self.tokenizer(document) if t not in self.stopwords and t not in string.punctuation]
                 
         if self.stemmer:
@@ -63,6 +66,7 @@ class Index:
         # The documents are ranked by their score, the top 3 ranked documents are printed.
 
     def lookup(self, query, k = 1.2, b = 0.75):
+        '''looks in the index for specified words in the query'''
         tokens = [t.lower() for t in self.tokenizer(query) if t not in self.stopwords and t not in string.punctuation]
                 
         if self.stemmer:
@@ -75,11 +79,12 @@ class Index:
         
         for token in tokens:
             if token in self.index:
-                if token in BOOST_VALUES:
-                    boost = BOOST_VALUES[token]
+                boost = 1.0
+                if token in boostscores.BOOST_VALUES:
+                    boost = boostscores.BOOST_VALUES[token]
                 query_tf = 1 + math.log(tokens.count(token))
                 query_idf = math.log(doc_count/len(self.index.get(token)))
-                query_vec[token] = query_tf*query_idf 
+                query_vec[token] = query_tf*query_idf*boost
         
     # ranking docs
         lucene_scoring = defaultdict(list)  # initialize dictionary for lucene score per doc as key
@@ -125,19 +130,31 @@ index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
 
 
 # read data from the file specified
-if len(sys.argv) < 2:
-    print("Please provide input file path")
-    sys.exit()
-  
-df = pd.read_excel(sys.argv[1])
-df.columns = ['Description', 'Site', 'Area', 'WorkCenter', 'WorkUnit']
-df = df.fillna(value= 'None')
-data = df['Description']
+# if len(sys.argv) < 2:
+#     print("Please provide input file path")
+#     sys.exit()
+# print("Starting execution...")  
 
-for d in data:
-    index.add(d)
+# df = pd.read_csv(sys.argv[1])
+# df.columns = ['Description', 'Site', 'Area', 'WorkCenter', 'WorkUnit']
+# df = df.fillna(value= 'None')
+# data = df.loc[(df['Site'] == 'SEC-4') & (df['Description'].notnull()), 'Description']
 
-index.lookup("operation load steam continue")
+# for d in data:
+#     index.add(d)
 
-# end = time.time()
-# print(end - start)
+# # end = time.time()
+# # print(end - start)
+
+# # save the created index
+# with open("indexdir/pkl_indices/dict.pickle","wb") as f:
+#     pkl.dump(index, f, protocol=pkl.HIGHEST_PROTOCOL)
+
+# open pickled index
+with open('indexdir/pkl_indices/dict.pickle','rb') as f:
+    index_saved = pkl.load(f)
+
+# lookup similar documents   
+query = "hot oil pump leak"
+index_saved.lookup(query)
+
