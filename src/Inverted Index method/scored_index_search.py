@@ -1,13 +1,13 @@
 import sys
-from collections import defaultdict
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
-from nltk.corpus import stopwords
 import math
 import numpy as np
 import pandas as pd
 import string
-import boostscores
+import nltk
+from collections import defaultdict
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+from nltk.corpus import stopwords
 import pickle as pkl
 
 # import time
@@ -23,7 +23,8 @@ class Index:
         self.unique_id = 0     # intialize doc_id
         self.doclengths = {}   # store length of documents
         self.tot_length = 0    # sum the document lengths to compute average for bm25
-        
+        self.boost_dic = {}
+
         if not stopwords:
             self.stopwords = set()
         else:
@@ -35,12 +36,36 @@ class Index:
     # The index will be a dictionary containing words as keys & [doc-id, term_frequency] as value.
         # Inverted index format --> {word1:[(doc_id, tf), (doc_id,tf),..], word2:[(),(),...]}
 
-    def add(self, document):
-        '''adds documents to the index while tokenizing and updating the corpus'''
-        tokens = [t.lower() for t in self.tokenizer(document) if t not in self.stopwords and t not in string.punctuation]
-                
+    def tokenize(self, text):
+        '''Tokenize the text into words'''
+        tokens = self.tokenizer(text)
+        return tokens
+    
+    def cleanStem(self, tokens):
+        '''Remove stopwords & punctuations, stem the words'''
+        tokens = [t.lower() for t in tokens if t not in self.stopwords and t not in string.punctuation]
         if self.stemmer:
             tokens = [self.stemmer.stem(t) for t in tokens]
+        return tokens 
+
+    def posTag(self,tokens):
+        '''POS-Tag the words, add the NNP (proper nouns) & NN (nouns) 
+           to a dictionary for boosting those terms in query'''
+        tags = nltk.pos_tag(tokens)
+        for tag in tags:
+            if tag[1] == 'NNP' and tag[0] not in self.boost_dic:
+                self.boost_dic[tag[0]] = 3.0
+    
+        else:
+            if tag[1] == 'NN' and tag[0] not in self.boost_dic:
+                self.boost_dic[tag[0]] = 2.0   
+
+    def add(self, document):
+        '''adds documents to the index'''
+        tokens = self.tokenize(document)
+        self.posTag(tokens)
+                
+        tokens = self.cleanStem(tokens)
 
         for token in tokens:    
             tf = tokens.count(token)    # counting term frequency
@@ -67,10 +92,8 @@ class Index:
 
     def lookup(self, query, k = 1.2, b = 0.75):
         '''looks in the index for specified words in the query'''
-        tokens = [t.lower() for t in self.tokenizer(query) if t not in self.stopwords and t not in string.punctuation]
-                
-        if self.stemmer:
-            tokens = [self.stemmer.stem(t) for t  in tokens]
+        tokens = self.tokenize(query)
+        tokens = self.cleanStem(tokens)
         
         doc_count = self.unique_id+1        # total number of docs
         
@@ -80,8 +103,8 @@ class Index:
         for token in tokens:
             if token in self.index:
                 boost = 1.0
-                if token in boostscores.BOOST_VALUES:
-                    boost = boostscores.BOOST_VALUES[token]
+                if token in self.boost_dic:
+                    boost = self.boost_dic[token]
                 query_tf = 1 + math.log(tokens.count(token))
                 query_idf = math.log(doc_count/len(self.index.get(token)))
                 query_vec[token] = query_tf*query_idf*boost
@@ -155,6 +178,6 @@ with open('indexdir/pkl_indices/dict.pickle','rb') as f:
     index_saved = pkl.load(f)
 
 # lookup similar documents   
-query = "hot oil pump leak"
+query = "  "
 index_saved.lookup(query)
 
