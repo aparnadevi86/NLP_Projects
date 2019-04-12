@@ -12,7 +12,6 @@ index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
 if len(sys.argv) < 2:
     print("Please provide input file path")
     sys.exit()
-print("Starting execution...")  
 
 df = pd.read_csv(sys.argv[1])
 df.columns = ['Description', 'Site', 'Area', 'WorkCenter', 'WorkUnit']
