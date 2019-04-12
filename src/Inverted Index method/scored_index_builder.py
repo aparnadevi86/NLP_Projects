@@ -1,14 +1,11 @@
-import sys
 import math
 import numpy as np
 import pandas as pd
 import string
 import nltk
 from collections import defaultdict
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
-from nltk.corpus import stopwords
-import pickle as pkl
+
+
 class Index:
     def __init__(self, tokenizer, stemmer = None, stopwords = None):
         
@@ -49,10 +46,10 @@ class Index:
         tags = nltk.pos_tag(tokens)
         for tag in tags:
             if tag[1] == 'NNP' and tag[0] not in self.boost_dic:
-                self.boost_dic[tag[0]] = 3.0   
+                self.boost_dic[tag[0]] = 2.0   
         else:
             if tag[1] == 'NN' and tag[0] not in self.boost_dic:
-                self.boost_dic[tag[0]] = 2.0   
+                self.boost_dic[tag[0]] = 1.5  
 
     def add_doc(self, document):
         '''adds documents to the index'''
@@ -90,8 +87,8 @@ class Index:
         for token in tokens:
             boost = 1.0 
             if token in self.index:
-                if token in self.boost_dic:
-                    boost = self.boost_dic[token]
+                # if token in self.boost_dic:
+                #     boost = self.boost_dic[token]
                 query_tf = 1 + math.log(tokens.count(token))
                 query_idf = math.log(doc_count/len(self.index.get(token)))
                 query_vec[token] = query_tf*query_idf*boost 
@@ -140,5 +137,3 @@ class Index:
             print('DOC_ID:', item[0], scoring, ':', item[1],
                   '\n', self.documents[item[0]], '\n')
             
-index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
-
