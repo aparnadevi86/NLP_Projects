@@ -142,31 +142,3 @@ class Index:
             
 index = Index(word_tokenize, PorterStemmer(), stopwords.words("english"))
 
-
-# read data from the file-path specified
-if len(sys.argv) < 2:
-    print("Please provide input file path")
-    sys.exit()
-print("Starting execution...")  
-
-df = pd.read_csv(sys.argv[1])
-df.columns = ['Description', 'Site', 'Area', 'WorkCenter', 'WorkUnit']
-df = df.fillna(value= 'None')
-data = df.loc[(df['Site'] == 'SEC-4') & (df['Description'].notnull()), 'Description']
-
-# add docs to the index
-for d in data:
-    index.add_doc(d)
-
-# save the created index
-with open("indexdir/pkl_indices/dict.pickle","wb") as f:
-    pkl.dump(index, f, protocol=pkl.HIGHEST_PROTOCOL)
-
-# open pickled index
-with open('indexdir/pkl_indices/dict.pickle','rb') as f:
-    index_saved = pkl.load(f)
-
-# lookup similar documents   
-query = "  "
-index_saved.lookup(query)
-
