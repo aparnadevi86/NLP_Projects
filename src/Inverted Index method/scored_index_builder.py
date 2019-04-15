@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import pandas as pd
+import re
 import string
 import nltk
 from collections import defaultdict
@@ -35,7 +36,9 @@ class Index:
     
     def clean_and_stem(self, tokens):
         '''converts to lower case, remove stopwords & punctuations, stem the words'''
-        tokens = [t.lower() for t in tokens if t not in self.stopwords and t not in string.punctuation]
+        tokens = [t.lower() for t in tokens \
+                    if t not in self.stopwords \
+                    and re.match('^[A-Za-z]{2,}|^[A-Za-z]-[0-9]+', t)]
         if self.stemmer:
             tokens = [self.stemmer.stem(t) for t in tokens]
         return tokens 
@@ -49,7 +52,7 @@ class Index:
                 self.boost_dic[tag[0]] = 2.0   
         else:
             if tag[1] == 'NN' and tag[0] not in self.boost_dic:
-                self.boost_dic[tag[0]] = 1.5  
+                self.boost_dic[tag[0]] = 1.5
 
     def add_doc(self, document):
         '''adds documents to the index'''
@@ -87,8 +90,8 @@ class Index:
         for token in tokens:
             boost = 1.0 
             if token in self.index:
-                # if token in self.boost_dic:
-                #     boost = self.boost_dic[token]
+                if token in self.boost_dic:
+                    boost = self.boost_dic[token]
                 query_tf = 1 + math.log(tokens.count(token))
                 query_idf = math.log(doc_count/len(self.index.get(token)))
                 query_vec[token] = query_tf*query_idf*boost 
@@ -96,7 +99,7 @@ class Index:
 
     def query_lookup(self, query, k=1.2, b=0.75, scoring='bm25'):
         '''looks in the index for specified words in the query,
-            extract the matching (doc_id,tf) and doc_len to ditionary'''
+            extract the matching (doc_id,tf) and doc_len to dictionary'''
         tokens, query_vec = self.query_vectorize(query)      
         score_list = defaultdict(list)
         doc_count = self.count_docs()
@@ -105,7 +108,7 @@ class Index:
             if token in self.index:
                 self.score_doc(token, k, b, scoring, doc_count, query_vec, score_list)
 
-        self.rank_docs(score_list, scoring)
+        self.rank_docs(query, score_list, scoring)
         
     def score_doc(self, token, k, b, scoring, doc_count, query_vec, score_list):
         '''calculates the scores for each matching token-document pair and
@@ -125,15 +128,25 @@ class Index:
                 score_list[idx].append(query_vec[token]*tf_norm*idf)
     
 
-    def rank_docs(self, score_list, scoring):
+    def rank_docs(self, query, score_list, scoring):
         '''sums the scores and ranks the matching docs and returns the top 3'''
+        matches = self.tokenize(query)
+        matches = self.clean_and_stem(matches)
+        print(matches, '\n')
+        print('The input log is:', '\n')
+        self.highlight_many(query, matches)
+
         total_scores = {}
-        
         for key,val in score_list.items():
             total_scores[key] = round(sum(val),3)
         print('The top 3 similar documents are: ', '\n')
         
         for item in sorted(total_scores.items(), key=lambda x: -x[1])[1:4]:
-            print('DOC_ID:', item[0], scoring, ':', item[1],
-                  '\n', self.documents[item[0]], '\n')
+            print('DOC_ID:', item[0], scoring, ':', item[1], '\n')
+            self.highlight_many(self.documents[item[0]], matches)
+
+    def highlight_many(self, text, keywords):
+        replacement = lambda match: "\033[91m" + match.group() + "\033[39m"
+        text = re.sub("|".join(map(re.escape, keywords)), replacement, text, flags=re.I)
+        print(text)
             
